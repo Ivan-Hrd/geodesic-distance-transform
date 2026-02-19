@@ -1,25 +1,33 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
 import numpy as np
+from PIL import Image
+from io import BytesIO
 
 app = FastAPI()
 
 # Local
-from app.service import traitement
+from .service import *
+from app.request.requests import *
+from app.response.response import *
 
-
-class TraitementRequest(BaseModel):
-    img_path: str
-    mask_path: str
-    numba: bool | None = None
-
-class TraitementResponse(BaseModel):
-    traitement : list 
+def load_image_into_numpy_array(data):
+    return np.array(Image.open(BytesIO(data)))
 
 @app.get("/")
 async def root():
     return {"message": "processing running"}
 
 @app.post("/traitement", response_model=TraitementResponse)
-async def read_item(traitements: TraitementRequest):
-    return {"traitement": traitement.process_image(traitements.img_path,traitements.mask_path,traitements.numba)}
+async def execute_single(img:UploadFile, msk:UploadFile, numba:bool):
+    imgBase = await img.read()
+    mskBase = await msk.read()
+    image = load_image_into_numpy_array(imgBase)
+    mask = load_image_into_numpy_array(mskBase)
+    listTraitement, timeToExecute = process_image(image,mask,numba)
+    return {"traitementList": listTraitement,
+            "timeToExecute": timeToExecute}
+
+@app.post("/benchmark", response_model=TraitementResponseBench)
+def execute_bench(traitementRequest: TraitementRequestBench):
+    listBench = process_benchmark(traitementRequest.img_path,traitementRequest.mask_path,traitementRequest.numba, traitementRequest.n_iteration)
+    return {"benchResList": listBench}

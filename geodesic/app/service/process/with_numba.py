@@ -1,6 +1,6 @@
+import numba
 import numpy as np
 from numba import njit
-import numba
 
 heap_type = np.dtype([
     ('x',np.int64),
@@ -11,8 +11,6 @@ heap_type = np.dtype([
 TurpleArgument = numba.types.Tuple([numba.types.int64,numba.types.int64])
 ValueList = numba.types.ListType(TurpleArgument)
 Float = numba.types.float64
-
-#ValueDict = numba.types.DictType(float,ValueList)
 
 
 @njit

@@ -2,8 +2,8 @@ from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile
 
 class TraitementRequest(BaseModel):
-    img: UploadFile
-    mask: UploadFile
+    img_path: UploadFile
+    mask_path: UploadFile
     numba: bool | None = None
 
 class TraitementRequestBench(BaseModel):
