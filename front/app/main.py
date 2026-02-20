@@ -4,6 +4,9 @@ from dash import Dash, dcc, html, Input, Output, callback, State
 import base64
 import plotly.express as px
 import dash_daq as daq
+import os
+
+backend_url: str = os.environ.get("BACKEND_URL", "http://localhost:8080")
 
 app = Dash()
 
@@ -132,7 +135,7 @@ def update_backend_output(n_clicks, base_contents, mask_contents, numba):
         msk_bytes, msk_type = _get_raw_bytes(mask_contents)
         try:
             response = requests.post(
-                f"http://127.0.0.1:8080/single_traitement?numba={numba}".lower(),
+                f"{backend_url}/single_traitement?numba={numba}".lower(),
                 files={
                     "img": ("img.png", img_bytes, img_type),
                     "msk": ("mask.png", msk_bytes, msk_type),
@@ -170,7 +173,7 @@ def update_bench_output(n_clicks, base_contents, mask_contents, numba, n_iterati
         msk_bytes, msk_type = _get_raw_bytes(mask_contents)
         try:
             response = requests.post(
-                f"http://127.0.0.1:8080/benchmark?numba={numba}&n_iterations={n_iterations}".lower(),
+                f"{backend_url}/benchmark?numba={numba}&n_iterations={n_iterations}".lower(),
                 files={
                     "img": ("img.png", img_bytes, img_type),
                     "msk": ("mask.png", msk_bytes, msk_type),
@@ -225,4 +228,4 @@ def update_mask_output_bench(contents):
         )
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8050, debug=False, use_reloader=False)
