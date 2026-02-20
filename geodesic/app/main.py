@@ -23,11 +23,17 @@ async def execute_single(img:UploadFile, msk:UploadFile, numba:bool):
     mskBase = await msk.read()
     image = load_image_into_numpy_array(imgBase)
     mask = load_image_into_numpy_array(mskBase)
-    listTraitement, timeToExecute = process_image(image,mask,numba)
+    listTraitement, shape, timeToExecute = process_image(image,mask,numba)
     return {"traitementList": listTraitement,
+            "shape": shape,
             "timeToExecute": timeToExecute}
 
 @app.post("/benchmark", response_model=TraitementResponseBench)
-def execute_bench(traitementRequest: TraitementRequestBench):
-    listBench = process_benchmark(traitementRequest.img_path,traitementRequest.mask_path,traitementRequest.numba, traitementRequest.n_iteration)
+async def execute_bench(img:UploadFile, msk:UploadFile, numba:bool, n_iterations: int):
+    imgBase = await img.read()
+    mskBase = await msk.read()
+    image = load_image_into_numpy_array(imgBase)
+    mask = load_image_into_numpy_array(mskBase)
+
+    listBench = process_benchmark(image,mask,numba, n_iterations)
     return {"benchResList": listBench}

@@ -13,24 +13,23 @@ def process_image(img,mask,is_numba):
         # call traitement_numba
         lst = _traitement_numba(img, mask)
         elapsed = time.perf_counter() - start
-        return  base64.b64encode(lst.tobytes()).decode('utf-8'), elapsed
+        return  base64.b64encode(lst.tobytes()).decode('utf-8'), lst.shape, elapsed
     else:
         # setup timer
         start = time.perf_counter()
         # call traitement_numba
         lst = _traitement(img, mask)
         elapsed = time.perf_counter() - start
-        return  base64.b64encode(lst.tobytes()).decode('utf-8'), elapsed
+        return  base64.b64encode(lst.tobytes()).decode('utf-8'), lst.shape, elapsed
 
-def process_benchmark(img_path,mask_path,is_numba, n):
-    img, mask = _load_pictures(img_path, mask_path)
+def process_benchmark(img,mask,is_numba, n):
     lstBench = []
     if is_numba:
         for i in range(n):
             # setup timer
             start = time.perf_counter()
             # call traitement_numba
-            _ = _traitement_numba(img, mask).tolist()
+            _ = _traitement_numba(img, mask)
             elapsed = time.perf_counter() - start
             lstBench.append(elapsed)
     else:
@@ -38,7 +37,7 @@ def process_benchmark(img_path,mask_path,is_numba, n):
             # setup timer
             start = time.perf_counter()
             # call traitement
-            _ = _traitement(img, mask).tolist()
+            _ = _traitement(img, mask)
             elapsed = time.perf_counter() - start
             lstBench.append(elapsed)
     return lstBench
@@ -53,8 +52,8 @@ def _load_pictures(img_path, mask_path):
 
 def _traitement(img, mask):
     # Traitement de l'image et du masque sans numba
-    return distance_numba(img,mask)
+    return distance_without_numba(img,mask)
 
 def _traitement_numba(img, mask):
     # Traitement de l'image et du masque avec numba
-    return distance_without_numba(img,mask)
+    return distance_numba(img,mask)
