@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 
 class TraitementResponse(BaseModel):
-    traitementList : list[list[float]]
+    traitementList : str
+    shape: list[int]
     timeToExecute: float
 
 class TraitementResponseBench(BaseModel):
