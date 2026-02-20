@@ -109,7 +109,7 @@ def update_mask_output(contents):
     if contents:
         return html.Div(
             [
-                html.H5(f"Uploaded image:"),
+                html.H5(f"Uploaded mask:"),
                 html.Div(
                     [
                         html.Img(src=contents, style={"height": "100px", "margin": "5px"})
@@ -215,7 +215,7 @@ def update_mask_output_bench(contents):
     if contents:
         return html.Div(
             [
-                html.H5(f"Uploaded image:"),
+                html.H5(f"Uploaded mask:"),
                 html.Div(
                     [
                         html.Img(src=contents, style={"height": "100px", "margin": "5px"})
