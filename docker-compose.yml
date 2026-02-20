@@ -1,0 +1,38 @@
+services:
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    ports:
+      - "8050:8050"
+    networks:
+      - front-tier
+      - back-tier
+    depends_on:
+      - backend
+      - geodesic
+    environment:
+      - BACKEND_URL=http://backend:8080 
+
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    networks:
+      - back-tier
+    depends_on:
+      - geodesic
+    environment:
+      - GEODESIC_URL=http://geodesic:8000
+  geodesic:
+    build:
+      context: ./geodesic
+      dockerfile: Dockerfile
+    networks:
+      - back-tier
+
+networks:
+  front-tier:
+    driver: bridge
+  back-tier:
+    driver: bridge
