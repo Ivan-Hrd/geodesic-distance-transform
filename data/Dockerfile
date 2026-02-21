@@ -8,6 +8,6 @@ COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --frozen --no-install-project
 COPY . .
 RUN uv sync --frozen
-EXPOSE 8082
+EXPOSE 8081
 
-CMD ["uv", "run", "fastapi", "dev", "--host", "0.0.0.0", "--port", "8082"]
+CMD ["uv", "run", "fastapi", "dev", "--host", "0.0.0.0", "--port", "8081"]
