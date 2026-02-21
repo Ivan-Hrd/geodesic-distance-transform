@@ -23,8 +23,11 @@ services:
     depends_on:
       geodesic:
         condition: service_started
+      data:
+        condition: service_started
     environment:
       - GEODESIC_URL=http://geodesic:8000
+      - DATABASE_URL=http://data:8081
   geodesic:
     build:
       context: ./geodesic
@@ -36,6 +39,8 @@ services:
     image: postgres:16
     container_name: postgres
     restart: unless-stopped
+    networks:
+      - back-tier
     ports:
       - "5433:5432"
     environment:
@@ -45,7 +50,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     healthcheck:
-      test: ["CMD-SHELL","pg_isrady -U postgres"]
+      test: ["CMD-SHELL","pg_isready -U postgres"]
       interval: 30s
       timeout: 30s
       retries: 5
@@ -55,12 +60,13 @@ services:
       context: ./data
       dockerfile: Dockerfile
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - back-tier
     environment:
       DATA_URL: http://data:8081
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5433/imagedb
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/imagedb
 
 volumes:
   postgres_data:
