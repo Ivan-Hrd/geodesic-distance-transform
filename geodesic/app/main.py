@@ -11,7 +11,7 @@ from app.request.requests import *
 from app.response.response import *
 
 def load_image_into_numpy_array(data):
-    return np.array(Image.open(BytesIO(data)))
+    return np.array(Image.open(BytesIO(data)).convert("L"))
 
 @app.get("/")
 async def root():

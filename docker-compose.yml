@@ -21,7 +21,8 @@ services:
     networks:
       - back-tier
     depends_on:
-      - geodesic
+      geodesic:
+        condition: service_started
     environment:
       - GEODESIC_URL=http://geodesic:8000
   geodesic:
@@ -30,6 +31,7 @@ services:
       dockerfile: Dockerfile
     networks:
       - back-tier
+
 
 networks:
   front-tier:
