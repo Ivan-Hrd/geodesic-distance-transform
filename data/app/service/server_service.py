@@ -1,7 +1,7 @@
 from sqlmodel import create_engine, SQLModel
 from ..domain import Image,Benchmark
-
-link = "postgresql://postgres:postgres@localhost:5432/imagedb"
+import os
+link = os.getenv("DATABASE_URL")
 engine = create_engine(link)
 
 def data_base_init():
