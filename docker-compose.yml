@@ -11,7 +11,6 @@ services:
     depends_on:
       - backend
       - geodesic
-      - database
     environment:
       - BACKEND_URL=http://backend:8080 
 
@@ -22,41 +21,20 @@ services:
     networks:
       - back-tier
     depends_on:
-      database:
-        condition: service_healthy
       geodesic:
         condition: service_started
     environment:
       - GEODESIC_URL=http://geodesic:8000
-      - DATABSE_URL=http://database:8001
   geodesic:
     build:
       context: ./geodesic
       dockerfile: Dockerfile
     networks:
       - back-tier
-  database:
-    build:
-      context: ./data
-      dockerfile: Dockerfile
-    networks:
-      - back-tier
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=imagedb
-      - POSTGRES_PASSWORD=toto
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d myapp_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+
 
 networks:
   front-tier:
     driver: bridge
   back-tier:
     driver: bridge
-
-volumes:
-  db_data:

@@ -12,6 +12,12 @@ app = Dash()
 
 app.layout = html.Div(
     [
+        html.H2("Computing Geodesic Distances"),
+        html.H3(" Upload Images & Masks"),
+        html.P(
+            "Upload the same number of images and masks. "
+            "Each image is paired with the mask at the same position."
+        ),
         dcc.Upload(
             id="upload-file",
             children="Drag and drop an image (only .png files will be uploaded)",
@@ -20,7 +26,7 @@ app.layout = html.Div(
                 "padding": "20px",
                 "textAlign": "center",
             },
-            multiple=False,  
+            multiple=True,  
             enable_folder_selection=False,# forbid folder drag-and-drop
             accept=".png",
         ),
@@ -33,7 +39,7 @@ app.layout = html.Div(
                 "padding": "20px",
                 "textAlign": "center",
             },
-            multiple=False,  
+            multiple=True,  
             enable_folder_selection=False,# forbid folder drag-and-drop
             accept=".png",
         ),
@@ -42,7 +48,7 @@ app.layout = html.Div(
             html.Button("Compute Geodesic Distance", id="send-btn"),
             daq.BooleanSwitch(id='numba-switch', on=False, label="Use numba", labelPosition="top"),
         ], style={"display": "flex", "alignItems": "center", "gap": "16px"}),
-        dcc.Graph(id="show-computed-res"),
+        html.Div(id="show-computed-res"),
         html.H1('Benchmark'),
                 dcc.Upload(
             id="upload-file-bench",
@@ -98,7 +104,8 @@ def update_output(contents):
                 html.H5(f"Uploaded image:"),
                 html.Div(
                     [
-                        html.Img(src=contents, style={"height": "100px", "margin": "5px"})
+                        html.Img(src=c, style={"height": "100px", "margin": "5px"})
+                        for c in contents
                     ]
                 ),
             ]
@@ -115,14 +122,15 @@ def update_mask_output(contents):
                 html.H5(f"Uploaded mask:"),
                 html.Div(
                     [
-                        html.Img(src=contents, style={"height": "100px", "margin": "5px"})
+                        html.Img(src=c, style={"height": "100px", "margin": "5px"})
+                        for c in contents
                     ]
                 ),
             ]
         )
 
 @callback(
-    Output("show-computed-res", "figure"),
+    Output("show-computed-res", "children"),
     Input("send-btn", "n_clicks"),
     State("upload-file", "contents"),
     State("upload-mask", "contents"),
@@ -130,26 +138,52 @@ def update_mask_output(contents):
     prevent_initial_call=True
 )
 def update_backend_output(n_clicks, base_contents, mask_contents, numba):
-    if base_contents and mask_contents:
-        img_bytes, img_type = _get_raw_bytes(base_contents)
-        msk_bytes, msk_type = _get_raw_bytes(mask_contents)
-        try:
-            response = requests.post(
-                f"{backend_url}/single_traitement?numba={numba}".lower(),
-                files={
-                    "img": ("img.png", img_bytes, img_type),
-                    "msk": ("mask.png", msk_bytes, msk_type),
-                }
+    graphs= []
+    lenght = len(base_contents)
+    if base_contents and mask_contents and lenght == len(mask_contents):
+        for i in range(lenght):
+            img_bytes, img_type = _get_raw_bytes(base_contents[i])
+            msk_bytes, msk_type = _get_raw_bytes(mask_contents[i])
+            try:
+                response = requests.post(
+                    f"{backend_url}/single_traitement?numba={numba}".lower(),
+                    files={
+                        "img": ("img.png", img_bytes, img_type),
+                        "msk": ("mask.png", msk_bytes, msk_type),
+                    }
+                )
+                json_obj = response.json()
+                bytesList = base64.b64decode(json_obj["traitementList"])  
+                distance_array = np.frombuffer(bytesList, dtype=np.float64).reshape(json_obj["shape"])
+                fig = px.imshow(distance_array, color_continuous_scale="inferno",
+                                        title=f"Geodesic Distance, computed in {json_obj["timeToExecute"]} seconds")
+                graphs.append(
+                html.Div(
+                    [
+                        html.H3(f"Pair {i+1}"),
+                        html.Div(
+                            [
+                                html.Img(src=base_contents[i], style={"height": "120px"}),
+                                html.Img(src=mask_contents[i],  style={"height": "120px"}),
+                            ],
+                            style={"display": "flex", "gap": "8px", "marginBottom": "8px"},
+                        ),
+                        dcc.Graph(
+                            id={"type": "result-graph", "index": i},
+                            figure=fig,
+                        ),
+                    ],
+                    style={"borderBottom": "1px solid #ccc", "marginBottom": "24px",
+                           "paddingBottom": "16px"},
+                )
             )
-            json_obj = response.json()
-            bytesList = base64.b64decode(json_obj["traitementList"])  
-            distance_array = np.frombuffer(bytesList, dtype=np.float64).reshape(json_obj["shape"])
-            fig = px.imshow(distance_array, color_continuous_scale="inferno",
-                                    title=f"Geodesic Distance, computed in {json_obj["timeToExecute"]} seconds")
-            return fig
-        except Exception as e:
-            print(f"Error for image: {str(e)}")
-            return None
+            except Exception as e:
+                graphs.append(html.Div(
+                    [
+                        html.H3(f"Failed to compute pair n={i}"),
+                    ]))
+
+    return graphs
 
 def _get_raw_bytes(content):
     # content is like "data:image/png;base64,AAAA..."
