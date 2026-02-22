@@ -9,6 +9,20 @@ def create_image(engine, img:str,temps=None,temps_numba=None):
         session.refresh(image)
         return image
 
+def update_image(engine, img:str,temps=None,temps_numba=None):
+    with Session(engine) as session:
+        image : Image = select_image(engine=engine,img=img)
+        if image is None:
+            return create_image(engine=engine,img=img,temps=temps,temps_numba=temps_numba)
+        else:   
+            if temps is not None:
+                image.elapsed_time = temps
+            if temps_numba is not None:
+                image.elapsed_time_numba = temps_numba
+            session.add(image)
+            session.commit()
+            session.refresh(image)
+            return image
 
 def select_image(engine, img:str) -> Image:
     with Session(engine) as session:
